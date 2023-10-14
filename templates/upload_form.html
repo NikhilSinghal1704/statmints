@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload XLSX</title>
+</head>
+<body>
+    <h1>Upload XLSX</h1>
+    <form action = "/upload" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="xlsx_file">
+        <input type="submit" value="Upload">
+    </form>
+</body>
+</html>

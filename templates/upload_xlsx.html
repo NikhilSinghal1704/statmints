@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dynamic Plotly Pie Chart</title>
+    <!-- Include Plotly library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <h1>Dynamic Plotly Pie Chart</h1>
+
+    <div id="pie-chart" style="width: 600px;"></div>
+
+    <script>
+        // Function to fetch data and create the Plotly chart
+        function createPieChart() {
+            fetch('/show')
+                .then(response => response.json())
+                .then(data => {
+                    // Create the Plotly chart with the fetched data
+                    Plotly.newPlot('pie-chart', data.data, data.layout);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        }
+
+        // Call the function to create the chart
+        createPieChart();
+    </script>
+</body>
+
+</html>
