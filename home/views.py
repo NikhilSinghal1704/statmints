@@ -49,6 +49,18 @@ def process(request, what):
             
             graph_data = json.loads(graph)
             return JsonResponse(graph_data)  # Return a JSON response
+        
+        elif what == "create_line_graph":
+            create_line_graph = pp.create_line_graph()
+            
+            create_line_graph = json.loads(create_line_graph)
+            return JsonResponse(create_line_graph)
+        
+        elif what == "table":
+            data = pp.get_df()
+            
+            data = json.loads(data)
+            return JsonResponse(data, safe=False)
     
         
     return JsonResponse({"lol:200"})
