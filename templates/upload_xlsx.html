@@ -15,7 +15,7 @@
     <script>
         // Function to fetch data and create the Plotly chart
         function createPieChart() {
-            fetch('/show')
+            fetch('/show/pie_chart')
                 .then(response => response.json())
                 .then(data => {
                     // Create the Plotly chart with the fetched data
