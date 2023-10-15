@@ -28,7 +28,7 @@ def upload(request):
     # Handle GET requests or display the upload form
     return render(request, "upload_form.html")
 
-def process(request):
+def process(request, what):
     client_ip = request.META.get("REMOTE_ADDR")
     
     # Assuming you want to get the latest UploadedXLSX object for the client's IP
@@ -36,13 +36,21 @@ def process(request):
     
     if file:
         pp = BankStatementProcessor(file.xlsx_file)
+        
+        if what == "pie_chart":
+            pie_data = pp.create_pie_chart()
+        
+            # Convert the pie_data JSON to a Python dictionary
+            pie_data_dict = json.loads(pie_data)
+            return JsonResponse(pie_data_dict)  # Return a JSON response
+        
+        elif what == "monthly_graph":
+            graph = pp.create_monthly_graph()
+            
+            graph_data = json.loads(graph)
+            return JsonResponse(graph_data)  # Return a JSON response
     
-        pie_data = pp.create_monthly_graph()
-    
-        # Convert the pie_data JSON to a Python dictionary
-        pie_data_dict = json.loads(pie_data)
-    
-        return JsonResponse(pie_data_dict)  # Return a JSON response
+        
     return JsonResponse({"lol"})
 
 def result(request):
