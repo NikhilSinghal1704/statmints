@@ -9,10 +9,18 @@ def upload(request):
         xlsx_file = request.FILES.get("xlsx_file")
         client_ip = request.META.get("REMOTE_ADDR")
         
+        # Check if an entry from the same client already exists
+        existing_entry = UploadedXLSX.objects.filter(client_ip=client_ip).first()
+
         if xlsx_file:
-            # Create and save an instance of the UploadedXLSX model
-            uploaded_xlsx = UploadedXLSX(xlsx_file=xlsx_file, client_ip=client_ip)
-            uploaded_xlsx.save()
+            if existing_entry:
+                # If an entry already exists, update the xlsx_file field
+                existing_entry.xlsx_file = xlsx_file
+                existing_entry.save()
+            else:
+                # If no entry exists, create a new instance of the UploadedXLSX model
+                uploaded_xlsx = UploadedXLSX(xlsx_file=xlsx_file, client_ip=client_ip)
+                uploaded_xlsx.save()
 
             # Redirect to a success page or return a response as needed
             return redirect('/result')  # Replace 'success_page' with your success page URL
