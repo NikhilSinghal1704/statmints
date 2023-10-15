@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 import re
 import plotly.graph_objs as go
@@ -19,6 +20,15 @@ class BankStatementProcessor:
         entry = entry.split("/")
         name = entry[-1]
         return name
+    
+    def change_date_format(self, date_str):
+        # Convert the input date string to a datetime object
+        date_obj = datetime.datetime.strptime(date_str, "%d/%m/%Y")
+        
+        # Extract the month and year
+        new_date_str = date_obj.strftime("%m/%Y")
+        
+        return new_date_str
 
     def extract_method_of_payment(self, entry):
         upi_pattern = r"UPI/\d+"
@@ -41,6 +51,8 @@ class BankStatementProcessor:
         self.df["Method of Payment"] = self.df["Remarks"].apply(
             self.extract_method_of_payment
         )
+        
+        self.df["YearMonth"] = self.df["Date"].apply(self.change_date_format)
 
         for type_value in self.df["Type"].unique():
             type_df = self.df[self.df["Type"] == type_value]
@@ -85,7 +97,7 @@ class BankStatementProcessor:
 
     def create_monthly_graph(self):
         # Convert 'Date' column to datetime
-        self.df["Date"] = pd.to_datetime(self.df["Date"], format="%d-%m-%Y")
+        self.df["Date"] = pd.to_datetime(self.df["Date"], format="%d/%m/%Y")
 
         # Extract the year and month from the 'Date' column
         self.df["YearMonth"] = self.df["Date"].dt.to_period("M")
@@ -134,67 +146,82 @@ class BankStatementProcessor:
 
         return bar_graph.to_json()
 
-    def calculate_final_balance(self):
-        # Sort the DataFrame by 'Date' in ascending order
-        df_sorted = self.df.sort_values(by="Date")
+    def get_last_transaction_balance(self):
+        # Convert the 'Date' column to datetime
+        self.df['Date'] = pd.to_datetime(self.df['Date'], format='%d/%m/%Y')
+        
+        # Create a 'YearMonth' column
+        self.df['YearMonth'] = self.df['Date'].dt.strftime('%m/%Y')
+        
+        # Group the DataFrame by 'YearMonth' and get the last transaction for each group
+        last_transactions = self.df.groupby('YearMonth').tail(1)
+        
+        # Create a dictionary with 'YearMonth' as keys and 'Balance' as values
+        result = dict(zip(last_transactions['YearMonth'], last_transactions['Balance']))
+        
+        return result
     
-        final_balances = []
-        current_balance = None
-    
-        # Iterate through the sorted DataFrame
-        for _, row in df_sorted.iterrows():
-            amount = row["Amount"]
-            balance = row["Balance"]
-    
-            if amount and amount > 0:
-                # Assuming positive amounts represent credits
-                current_balance = balance
-    
-            elif amount and amount < 0:
-                # Assuming negative amounts represent debits
-                if current_balance is not None:
-                    current_balance -= abs(amount)
-    
-            final_balances.append(current_balance)
-    
-        return final_balances
-
     def create_line_graph(self):
-        self.df['Date'] = pd.to_datetime(self.df['Date'], format='%d-%m-%Y')
-        self.df['YearMonth'] = self.df['Date'].dt.to_period('M')  # Add YearMonth column
-
-        final_balance = self.calculate_final_balance()  # Calculate final balances if not already done
-
+        self.df['Date'] = pd.to_datetime(self.df['Date'], format='%d/%m/%Y')
+        self.df['YearMonth'] = self.df['Date'].dt.strftime('%m/%Y')  # Add YearMonth column
+    
+        # Use the get_last_transaction_balance function to get the last transaction balances
+        last_transaction_balances = self.get_last_transaction_balance()
+    
         # Create a line graph using Plotly
         line_graph = go.Figure()
-
-        # Create a line chart for final balances
+    
+        # Create a line chart for last transaction balances
         line_graph.add_trace(
             go.Scatter(
-                x=self.df['YearMonth'].unique().strftime('%m/%y'),
-                y=final_balance,
+                x=list(last_transaction_balances.keys()),
+                y=list(last_transaction_balances.values()),
                 mode='lines+markers',
-                name='Final Balance',
-                marker_color='blue',
+                name='Last Transaction Balance',
+                line=dict(color='blue', width=2),
+                marker=dict(size=8, color='blue', symbol='circle'),
+                text=[f'Balance: {balance}' for balance in last_transaction_balances.values()],
+                hoverinfo='x+text',
             )
         )
-
+    
         # Customize the appearance of the line graph
         line_graph.update_layout(
             xaxis_tickangle=-45,
             xaxis_title='Month (MM/YY)',
-            yaxis_title='Final Balance',
-            title='Monthly Final Balances',
+            yaxis_title='Last Transaction Balance',
+            title='Last Transaction Balances',
+            template="plotly_dark",  # Use a dark theme for the plot
         )
-
+    
+        # Add gridlines and a shaded region for improved readability
+        line_graph.update_xaxes(showgrid=True, gridwidth=1, gridcolor='gray')
+        line_graph.update_yaxes(showgrid=True, gridwidth=1, gridcolor='gray')
+        
+        # Add smooth line interpolation
+        line_graph.update_traces(line_shape='spline')
+    
+        # Increase the size of the chart
+        line_graph.update_layout(width=1000, height=500)
+    
+        # Add a background color to the chart
+        line_graph.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    
+        # Remove legend and use custom legend
+        line_graph.update_layout(showlegend=False)
+        line_graph.add_trace(go.Scatter(x=[last_transaction_balances], y=[last_transaction_balances],
+                                       mode='lines+markers',
+                                       marker=dict(size=12, color='blue', symbol='circle'),
+                                       name='Last Transaction Balance'))
+    
         return line_graph.to_json()
 
-
     def get_dataframes_by_type(self):
-        return self.dataframes_by_type.to_json(orient='records')
+        return self.dataframes_by_type.to_json(orient="records")
 
     def get_dataframes_by_method(self):
-        return self.dataframes_by_method.to_json(orient='records')
-    
+        return self.dataframes_by_method.to_json(orient="records")
+
     def get_df(self):
-        return self.df.to_json(orient='records')
+        print(self.df)
+        return self.df.to_json(orient="records")
