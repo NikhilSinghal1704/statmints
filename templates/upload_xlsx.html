@@ -1,34 +1,46 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Dynamic Plotly Pie Chart</title>
     <!-- Include Plotly library -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
     <h1>Dynamic Plotly Pie Chart</h1>
 
-    <div id="pie-chart" style="width: 600px;"></div>
+    <div id="pie-chart" style="width: 600px"></div>
+    <div id="bar-graph-container" style="width: 600px"></div>
 
     <script>
-        // Function to fetch data and create the Plotly chart
-        function createPieChart() {
-            fetch('/show/pie_chart')
-                .then(response => response.json())
-                .then(data => {
-                    // Create the Plotly chart with the fetched data
-                    Plotly.newPlot('pie-chart', data.data, data.layout);
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                });
-        }
+      // Function to fetch data and create the Plotly chart
+      function creategraph() {
+        fetch("/show/pie_chart")
+          .then((response) => response.json())
+          .then((data) => {
+            // Create the Plotly chart with the fetched data
+            Plotly.newPlot("pie-chart", data.data, data.layout);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+          });
+      }
 
-        // Call the function to create the chart
-        createPieChart();
+      function lol(){
+        fetch("/show/monthly_graph")
+          .then((response) => response.json())
+          .then((data) => {
+            // Render the bar graph
+            Plotly.newPlot("bar-graph-container", data.data, data.layout);
+          })
+          .catch((error) =>{
+            console.error("Error fetching bar graph data:", error)
+           });
+      }
+
+      // Call the function to create the chart
+      creategraph();
+      lol();
     </script>
-</body>
-
+  </body>
 </html>
