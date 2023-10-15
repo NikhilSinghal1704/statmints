@@ -51,7 +51,7 @@ def process(request, what):
             return JsonResponse(graph_data)  # Return a JSON response
     
         
-    return JsonResponse({"lol"})
+    return JsonResponse({"lol:200"})
 
 def result(request):
     return render(request, "upload_xlsx.html")
